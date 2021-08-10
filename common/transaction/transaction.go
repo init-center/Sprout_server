@@ -20,17 +20,17 @@ func Start(db *sqlx.DB, txFunc TxFunc) (err error) {
 	// but if committed, cannot be rolled back
 	defer func() {
 		if p := recover(); p != nil {
-			_ = tx.Rollback()
 			err = errors.New(fmt.Sprintf("%v", p))
-		} else if err != nil {
-			_ = tx.Rollback()
-		} else {
-			err = tx.Commit()
 		}
+		_ = tx.Rollback()
 	}()
 
 	// run txFunc
 	err = txFunc(tx)
+	if err != nil {
+		return
+	}
 
+	err = tx.Commit()
 	return
 }
